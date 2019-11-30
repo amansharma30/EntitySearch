@@ -1,14 +1,15 @@
 package org.indexing;
+
 import java.io.Serializable;
+import java.util.Set;
 
-public class ImportantWords implements Serializable{
+public class ImportantWords implements Serializable {
 
-	
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	public String words[];
+	private Set<String> words;
 
 	public ImportantWords() {
 		// TODO Auto-generated constructor stub
@@ -16,24 +17,21 @@ public class ImportantWords implements Serializable{
 
 	@Override
 	public String toString() {
-//		StringBuilder builder = new StringBuilder();
-//		builder.append("word list is: {");
-//		for (int i = 0; i < this.words.length; i++) {
-//			builder.append(this.words[i] + ",");
-//		}
-//		builder.append("}");
-//		return builder.toString();
-		return "Important Words [words="
-        + words+ "]"; 
+		StringBuilder builder = new StringBuilder();
+		builder.append("word list is: ");
+		
+		builder.append(this.words);
+	
+		return builder.toString();
+		
 	}
 
-
-	public void setImportantWords(String[] words) {
+	public void setImportantWords(Set<String> words) {
 
 		this.words = words;
 	}
-	
-	public String[] getImportantWords() {
+
+	public Set<String> getImportantWords() {
 
 		return words;
 	}
