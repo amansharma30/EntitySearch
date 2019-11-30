@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/gson"/>
+	<classpathentry kind="src" path="EntitySearch/src/main/java"/>
+	<classpathentry kind="src" path="EntitySearch/src/test/java"/>
+	<classpathentry kind="lib" path="EntitySearch/target/indexing-0.0.1-SNAPSHOT.jar"/>
+	<classpathentry kind="output" path="EntitySearch/target/classes"/>
+</classpath>
