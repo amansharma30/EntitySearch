@@ -1,17 +1,13 @@
 package org.indexing;
-
 import java.io.Serializable;
-
-import javax.json.bind.annotation.JsonbCreator;
-import javax.json.bind.annotation.JsonbProperty;
 
 public class ImportantWords implements Serializable{
 
+	
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	@JsonbProperty("words")
 	public String words[];
 
 	public ImportantWords() {
@@ -20,18 +16,25 @@ public class ImportantWords implements Serializable{
 
 	@Override
 	public String toString() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("word list is: {");
-		for (int i = 0; i < this.words.length; i++) {
-			builder.append(this.words[i] + ",");
-		}
-		builder.append("}");
-		return builder.toString();
+//		StringBuilder builder = new StringBuilder();
+//		builder.append("word list is: {");
+//		for (int i = 0; i < this.words.length; i++) {
+//			builder.append(this.words[i] + ",");
+//		}
+//		builder.append("}");
+//		return builder.toString();
+		return "Important Words [words="
+        + words+ "]"; 
 	}
 
-	@JsonbCreator
-	public ImportantWords(@JsonbProperty("words") String[] words) {
+
+	public void setImportantWords(String[] words) {
 
 		this.words = words;
+	}
+	
+	public String[] getImportantWords() {
+
+		return words;
 	}
 }

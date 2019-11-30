@@ -4,16 +4,15 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.lang.System.Logger;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
 import java.net.URL;
 import java.net.URLEncoder;
 
+import com.google.gson.Gson;
+
 public class RestConsumerImportantWords {
 
-	public static String[] collectWords(DocumentFile fileContent) throws IOException {
+	public ImportantWords collectWords(DocumentFile fileContent) throws IOException {
 
 		String targetUrl = "http://localhost:5003/getImpWords";
 		URL url = new URL(targetUrl + "?filename=" + URLEncoder.encode(fileContent.getText(), "UTF-8"));
@@ -42,8 +41,20 @@ public class RestConsumerImportantWords {
 			System.out.println("SERVICE FAILED");
 		}
 
-		return response.toString().split(",");
+		char quote = '"';
+		char escQuote = '\"';
 
+		return this.jsonify(response.toString().replace(quote, escQuote));
+
+	}
+
+	private ImportantWords jsonify(String response) {
+
+		Gson gson = new Gson();
+
+		ImportantWords impWords = gson.fromJson(response, ImportantWords.class);
+
+		return impWords;
 	}
 
 	public static void main(String[] args) throws IOException {
@@ -53,10 +64,10 @@ public class RestConsumerImportantWords {
 				+ "\n"
 				+ "As of 2015, Khan is co-chairman of the motion picture production company Red Chillies Entertainment and its subsidiaries, and is the co-owner of the Indian Premier League cricket team Kolkata Knight Riders and the Caribbean Premier League team Trinbago Knight Riders. He is a frequent television presenter and stage show performer. The media often label him as \"Brand SRK\" because of his many endorsement and entrepreneurship ventures. Khan's philanthropic endeavours have provided health care and disaster relief, and he was honoured with UNESCO's Pyramide con Marni award in 2011 for his support of children's education and the World Economic Forum's Crystal Award in 2018 for his leadership in championing women's and children's rights in India. He regularly features in listings of the most influential people in Indian culture, and in 2008, Newsweek named him one of their fifty most powerful people in the world.";
 		DocumentFile documentFile = new DocumentFile(file);
-		String[] words = collectWords(documentFile);
-		for (int i = 0; i < words.length; i++) {
-			System.out.println(words[i]);
-		}
+
+		RestConsumerImportantWords wordsProcessor = new RestConsumerImportantWords();
+		ImportantWords words = wordsProcessor.collectWords(documentFile);
+		System.out.println(words);
 
 	}
 }
