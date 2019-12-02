@@ -32,7 +32,7 @@ public class RestConsumerImportantWords {
 			BufferedReader in = new BufferedReader(new InputStreamReader(postConnection.getInputStream()));
 			String inputLine;
 
-			while ((inputLine = in.readLine()) != null) {
+			while ((inputLine = in.readLine()) != null && inputLine != "") {
 				response.append(inputLine);
 			}
 			in.close();

@@ -1,9 +1,9 @@
 package org.indexing;
+
 import java.io.Serializable;
 
-public class ImportantWords implements Serializable{
+public class ImportantWords implements Serializable {
 
-	
 	/**
 	 * 
 	 */
@@ -18,18 +18,21 @@ public class ImportantWords implements Serializable{
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("word list is: {");
-		
-			builder.append(this.words);
-		
+
+		for (String string : words) {
+			builder.append(string + ", ");
+		}
+
+		builder.append("}");
+
 		return builder.toString();
 	}
-
 
 	public void setImportantWords(String[] words) {
 
 		this.words = words;
 	}
-	
+
 	public String[] getImportantWords() {
 
 		return words;
