@@ -21,18 +21,29 @@ public class IndexTable {
 				"Raees", "Indian", "Red_Chillies_Entertainment", "Kolkata_Knight_Riders", "Trinbago_Knight_Riders",
 				"UNESCO", "Marni", "Crystal_Award", "Newsweek" };
 
-		ArrayList<Occurrence> occurences = new ArrayList<Occurrence>();
+		ArrayList<Word> words = new ArrayList<Word>();
 		for (int i = 0; i < impWords.length; i++) {
-			System.err.println(impWords[i]);
-			Occurrence occurrence = new Occurrence();
-			occurrence.setPos(doc1.indexOf(impWords[i]));
-			occurrence.setDocId(d1.getDocId()); // subject to changes
-			occurences.add(occurrence);
-
+			Word word = new Word();
+			ArrayList<Occurrence> occurences = new ArrayList<Occurrence>();
+			int index = doc1.indexOf(impWords[i]);
+			while (index >= 0) {
+				Occurrence occurrence = new Occurrence();
+				occurrence.setPos(index);
+				occurrence.setDocId(d1.getDocId()); // subject to changes
+				occurences.add(occurrence);
+				index = doc1.indexOf(impWords[i], index + impWords[i].length());
+			}
+			word.setWord(impWords[i]);
+			word.setOccurence(occurences);
+			words.add(word);
 		}
 
-		for (int i = 0; i < impWords.length; i++) {
-			System.out.println(impWords[i] + "  " + occurences.get(i).getPos());
+		for (int i = 0; i < words.size(); i++) {
+			System.out.print(words.get(i).getWord() + "  ");
+			for (int j = 0; j < words.get(i).getOccurence().size(); j++) {
+				System.out.print(words.get(i).getOccurence().get(j).getPos() + "  ");
+			}
+			System.out.println();
 		}
 
 	}
