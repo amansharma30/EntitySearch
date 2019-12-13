@@ -21,6 +21,7 @@ public class BM25FScoring {
 		String[] queryTerms = queryString.split(" "); // use \\s+
 		this.queryTerms = queryTerms;
 
+		
 		// setting avls and preprocessing
 		for (int i = 0; i < files.length; i++) {
 			this.avls += files[i].length();
