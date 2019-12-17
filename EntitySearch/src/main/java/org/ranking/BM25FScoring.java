@@ -1,9 +1,13 @@
 package org.ranking;
 
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import org.aksw.agdistis.util.Triple;
+import org.aksw.agdistis.util.TripleIndexContext;
 import org.apache.commons.lang3.StringUtils;
 
 public class BM25FScoring {
@@ -21,7 +25,6 @@ public class BM25FScoring {
 		String[] queryTerms = queryString.split(" "); // use \\s+
 		this.queryTerms = queryTerms;
 
-		
 		// setting avls and preprocessing
 		for (int i = 0; i < files.length; i++) {
 			this.avls += files[i].length();
@@ -65,8 +68,9 @@ public class BM25FScoring {
 	public double getTermFrequency(String file, String queryTerm) {
 		double tfi = 0.0;
 		int tfsi = StringUtils.countMatches(file, queryTerm.toLowerCase());
-		tfi = tfsi / getNormalisationFactor(file, 0.5);
 
+		tfi = tfsi / getNormalisationFactor(file, 0.75);
+		System.out.println("tfsi is " + tfsi + " query term is " + queryTerm + " tfi is " + tfi);
 		return tfi;
 
 	}
@@ -79,15 +83,18 @@ public class BM25FScoring {
 		} else {
 			ni = 0;
 		}
-		double wiIDF = Math.log((documentCount - ni + 0.5) / (ni + 0.5) + 1);// wiIDF is inverse document frequency
+		// System.out.println(ni+" for "+querStringTerm);
+		double wiIDF = Math.log(1 + (documentCount - ni + 0.5) / (ni + 0.5));// wiIDF is inverse document frequency
 		// sigmoid function
 		double wiBM25F = (tf / (k1 + tfi)) * wiIDF;
 		DecimalFormat df = new DecimalFormat("#.#######");
+		System.out.println("score for " + querStringTerm + " is :" + wiBM25F);
 		return wiBM25F;
 
 	}
 
 	public Map<Integer, Double> performRanking() {
+
 		docxAndScore = new HashMap<Integer, Double>();
 
 		for (int i = 0; i < this.files.length; i++) {
@@ -96,19 +103,22 @@ public class BM25FScoring {
 
 			for (int j = 0; j < this.queryTerms.length; j++) {
 				tf += getTermFrequency(this.files[i], this.queryTerms[j]);
+
 			}
+			System.out.println("tf is " + tf);
 			for (int j = 0; j < this.queryTerms.length; j++) {
 				wBM25F += sigmoid(queryTerms[j], files[i], 1.5, getTermFrequency(files[i], this.queryTerms[j]), tf);
-				// System.err.println(wBM25F);
+				// System.err.println(sigmoid(queryTerms[j], files[i], 1.5,
+				// getTermFrequency(files[i], this.queryTerms[j]), tf));
 			}
-			System.out.println(i + "   is " + wBM25F + "    ---->" + files[i]);
+			System.err.println(i + "   is " + wBM25F + "    ---->" + files[i]);
 			docxAndScore.put(i, wBM25F);
 		}
 		return docxAndScore;
 
 	}
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		String[] files = {
 				"Dresden (German pronunciation: [ˈdʁeːsdn̩] ) is the capital city of the Free State of Saxony in Germany. It is situated in a valley on the River Elbe, near the border with the Czech Republic. Dresden has a long history as the capital and royal residence for the Electors and Kings of Saxony, who for centuries furnished the city with cultural and artistic splendour. The city was known as the Jewel Box, because of its baroque and rococo city centre. The controversial American and British bombing of Dresden in World War II towards the end of the war killed approximately 25,000, many of whom were civilians, and destroyed the entire city centre. After the war restoration work has helped to reconstruct parts of the historic inner city, including the Katholische Hofkirche, the Semper Oper and the Dresdner Frauenkirche as well as the suburbs. Before and since German reunification in 1990, Dresden was and is a cultural, educational, political, and economic centre of Germany and Europe. The Dresden University of Technology is one of the 10 largest universities in Germany and part of the German Universities Excellence Initiative.",
 				"Dresden 45 was a hardcore punk and crossover thrash band from Houston, Texas, also known as D'45 and variantly, D45. They were one of the first hardcore bands to implement a guitar-driven heavy metal sound into their music. Like other Houston bands Dirty Rotten Imbeciles and Verbal Abuse, Dresden 45 played a breathless, high-speed type of hardcore punk now referred to as thrashcore.",
@@ -120,7 +130,11 @@ public class BM25FScoring {
 				"Dresden Airport (IATA: DRS, ICAO: EDDC) is the international airport in Dresden, the capital of the German Free State of Saxony. It is located in Klotzsche, a district of Dresden 9 km (5.6 mi) north of the city centre. It was known in German as Flughafen Dresden-Klotzsche. Destinations from the airport include a few European cities and several holiday destinations. EADS EFW, a subsidiary of EADS and mainly responsible for freighter aircraft conversion, is based at the airport."
 
 		};
-		BM25FScoring bm25fScoring = new BM25FScoring(files, "Dresden");
+		TripleIndexContext context = new TripleIndexContext();
+		String findStr = "Dresden";
+		List<Triple> list = context.search(findStr, null, null);
+		files= (String[]) list.toArray();
+		BM25FScoring bm25fScoring = new BM25FScoring(files, findStr);
 		System.out.println(bm25fScoring.performRanking());
 
 	}
