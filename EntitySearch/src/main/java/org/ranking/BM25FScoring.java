@@ -168,10 +168,16 @@ public class BM25FScoring {
 				wBM25F += sigmoid(queryTerms[j], files[i], 1.5, getTermFrequency(files[i], this.queryTerms[j]), tf);
 
 			}
-			//System.out.println(this.originalFiles[i].split(" <HEADER> ")[0].replaceAll("_", " ").toLowerCase().trim()
-			//		+ " with " + this.queryTerms[0].toLowerCase().trim());
+			// System.out.println(this.originalFiles[i].split(" <HEADER>
+			// ")[0].replaceAll("_", " ").toLowerCase().trim()
+			// + " with " + this.queryTerms[0].toLowerCase().trim());
 			if (this.originalFiles[i].split(" <HEADER> ")[0].replaceAll("_", " ").toLowerCase().trim()
 					.equalsIgnoreCase(this.queryTerms[0].trim())) {
+
+				//	 NER type check to add weight 		
+				
+//				if(	isSameEntity(this.originalFiles[i].split(" <HEADER> ")[0].replaceAll("_", " ").toLowerCase().trim(),
+//							this.queryTerms[0].trim())) {
 				wBM25F += headerWeight;
 				System.err.println("Header weight added for  " + this.originalFiles[i].split(" <HEADER> ")[0]);
 			}
@@ -195,22 +201,45 @@ public class BM25FScoring {
 	 */
 
 	boolean isSameEntity(String entity1, String entity2) {
-		String exampleText = "aman@gmail.com";
+		String entity1Type = "";
+		String entity2Type = "";
+		
 		Properties props = new Properties();
 		props.setProperty("annotators", "tokenize,ssplit,pos,lemma,ner");
 		StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
-		CoreDocument document = new CoreDocument(exampleText);
+		CoreDocument document = new CoreDocument(entity1);
 		pipeline.annotate(document);
-		// get confidences for entities
+		
+		// get confidences for entity1
 		for (CoreEntityMention em : document.entityMentions()) {
 			System.out.println(em.text() + "\t" + em.entityTypeConfidences());
+
 		}
 		System.out.println("break()");
 		// get confidences for tokens
 		for (CoreLabel token : document.tokens()) {
 			System.out.println(token.word() + "\t" + token.get(CoreAnnotations.NamedEntityTagProbsAnnotation.class));
+			//entity1Type = token.get(CoreAnnotations.NamedEntityTagProbsAnnotation.class);
+		}
+		
+		// get confidences for entity2
+		document = new CoreDocument(entity2);
+		pipeline.annotate(document);
+		
+		for (CoreEntityMention em : document.entityMentions()) {
+			System.out.println(em.text() + "\t" + em.entityTypeConfidences());
+
+		}
+		System.out.println("break()");
+		// get confidences for tokens
+		for (CoreLabel token : document.tokens()) {
+			System.out.println(token.word() + "\t" + token.get(CoreAnnotations.NamedEntityTagProbsAnnotation.class));
+			//entity2Type = token.get(CoreAnnotations.NamedEntityTagProbsAnnotation.class);
 		}
 
+		if (entity1Type.equalsIgnoreCase(entity2Type)) {
+			return true;
+		}
 		return false;
 	}
 
@@ -299,8 +328,8 @@ public class BM25FScoring {
 		BM25FScoring bm25fScoring = new BM25FScoring(files, findStr);
 		System.out.println(bm25fScoring.performRanking());
 
-		bm25fScoring.isSameEntity("", "");
-		
+		bm25fScoring.isSameEntity("Dresden Railway Station", "Dresden");
+
 	}
 }
 
