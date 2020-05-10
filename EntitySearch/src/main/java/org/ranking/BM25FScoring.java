@@ -14,6 +14,7 @@ import java.util.TreeMap;
 
 import org.apache.commons.lang3.StringUtils;
 
+import edu.stanford.nlp.ie.crf.CRFClassifier;
 import edu.stanford.nlp.ling.CoreAnnotations;
 
 import edu.stanford.nlp.ling.CoreLabel;
@@ -174,8 +175,8 @@ public class BM25FScoring {
 			if (this.originalFiles[i].split(" <HEADER> ")[0].replaceAll("_", " ").toLowerCase().trim()
 					.equalsIgnoreCase(this.queryTerms[0].trim())) {
 
-				//	 NER type check to add weight 		
-				
+				// NER type check to add weight
+
 //				if(	isSameEntity(this.originalFiles[i].split(" <HEADER> ")[0].replaceAll("_", " ").toLowerCase().trim(),
 //							this.queryTerms[0].trim())) {
 				wBM25F += headerWeight;
@@ -191,6 +192,15 @@ public class BM25FScoring {
 
 	}
 
+	public CRFClassifier getModel(String modelPath) {
+		return CRFClassifier.getClassifierNoExceptions(modelPath);
+	}
+
+	public void doTagging(CRFClassifier model, String input) {
+		input = input.trim();
+		System.out.println(input + "=>" + model.classifyToString(input));
+	}
+
 	/*
 	 * 
 	 * NLP Named Entity Recognition
@@ -203,29 +213,44 @@ public class BM25FScoring {
 	boolean isSameEntity(String entity1, String entity2) {
 		String entity1Type = "";
 		String entity2Type = "";
-		
+
 		Properties props = new Properties();
+		// props.put("annotators", "tokenize, ssplit, pos, lemma, ner, regexner");
+		// props.put("regexner.mapping",
+		// "/Users/amansharma/git/EntitySearch/EntitySearch/EntitySearch/resources/training.rules");
+
 		props.setProperty("annotators", "tokenize,ssplit,pos,lemma,ner");
+
+		// props.setProperty("ner.additional.regexner.validpospattern", "^(NN|JJ).*");
+		// add additional rules, customize TokensRegexNER annotator
+		// props.setProperty("ner.additional.regexner.ignorecase", "true");
+		props.setProperty("ner.useSUTime", "0");
+		// props.setProperty("ner.additional.regexner.mapping",
+		// "/Users/amansharma/git/EntitySearch/EntitySearch/EntitySearch/resources/training.rules");
+
 		StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
+		pipeline.addAnnotator(new TokensRegexAnnotator(
+				"/Users/amansharma/git/EntitySearch/EntitySearch/EntitySearch/resources/training.rules"));
 		CoreDocument document = new CoreDocument(entity1);
 		pipeline.annotate(document);
-		
+
 		// get confidences for entity1
 		for (CoreEntityMention em : document.entityMentions()) {
 			System.out.println(em.text() + "\t" + em.entityTypeConfidences());
+			entity1Type = em.entityTypeConfidences().toString();
 
 		}
 		System.out.println("break()");
 		// get confidences for tokens
 		for (CoreLabel token : document.tokens()) {
-			System.out.println(token.word() + "\t" + token.get(CoreAnnotations.NamedEntityTagProbsAnnotation.class));
-			//entity1Type = token.get(CoreAnnotations.NamedEntityTagProbsAnnotation.class);
+			// System.out.println(token.word() + "\t" +
+			// token.get(CoreAnnotations.NamedEntityTagProbsAnnotation.class));
 		}
-		
+
 		// get confidences for entity2
-		document = new CoreDocument(entity2);
-		pipeline.annotate(document);
-		
+		CoreDocument document2 = new CoreDocument(entity2);
+		pipeline.annotate(document2);
+
 		for (CoreEntityMention em : document.entityMentions()) {
 			System.out.println(em.text() + "\t" + em.entityTypeConfidences());
 
@@ -233,8 +258,9 @@ public class BM25FScoring {
 		System.out.println("break()");
 		// get confidences for tokens
 		for (CoreLabel token : document.tokens()) {
-			System.out.println(token.word() + "\t" + token.get(CoreAnnotations.NamedEntityTagProbsAnnotation.class));
-			//entity2Type = token.get(CoreAnnotations.NamedEntityTagProbsAnnotation.class);
+			// System.out.println(token.word() + "\t" +
+			// token.get(CoreAnnotations.NamedEntityTagProbsAnnotation.class));
+			// entity2Type = token.get(CoreAnnotations.NamedEntityTagProbsAnnotation.class);
 		}
 
 		if (entity1Type.equalsIgnoreCase(entity2Type)) {
@@ -317,7 +343,6 @@ public class BM25FScoring {
 		files[21] = "Dresden Codak <HEADER> Dresden Codak is a webcomic written and illustrated by Aaron Diaz. Described by Diaz as a \"celebration of science, death and human folly\", the comic presents stories that deal with elements of philosophy, science and technology, and/or psychology. The comic was recognized in 2008 at the Web Cartoonist's Choice Awards for Outstanding Use of Color and Outstanding Use of The Medium. On October 22, 2008, Dresden Codak concluded a long-running sequence called \"Hob\", which focused on the character Kimiko's discovery of a post-Singularity robot and its attempted recovery by people from a future in which Earth was destroyed in a war with the artificial intelligence that once tended the planet. On February 25th, 2013, Aaron Diaz launched a Kickstarter campaign to raise funds for a hard cover book edition of the webcomic. Dubbed The Tomorrow Girl: Dresden Codak Volume 1, it collected the first 5 years of the webcomic plus additional art and reformatted everything to fit printed media. The campaign reached its original goal of $30,000 in less than 24 hours and ended with a total of $534,994.";
 
 		files[22] = "Dresden Monarchs <HEADER> The Dresden Monarchs are an American football team from Dresden, Germany. They have been a member of the first tier German Football League since 2002 and play in its Northern Division. As its greatest success, the club reached the German Bowl for the first time in 2013, where it lost to the Braunschweig Lions by a point";
-		System.out.println("scoring started");
 
 		files[23] = "Dresden Ohio <HEADER> Dresden is a village in Jefferson and Cass townships in Muskingum County, Ohio, United States, along the Muskingum River at the mouth of Wakatomika Creek. It was incorporated on March 9, 1835. The population was 1,529 at the 2010 census.\r\n"
 				+ "\r\n" + "";
@@ -325,10 +350,19 @@ public class BM25FScoring {
 		files[24] = "Dresden Zoo <HEADER> Dresden Zoo, or Zoo Dresden, is a zoo situated in the city of Dresden in Germany. It was opened in 1861, making it Germany's fourth oldest zoo. It was originally designed by Peter Joseph Lenné. The zoo is located on the southern edge of the Großer Garten (Great Garden), a large city centre park. The zoo houses about 3000 animals of almost 400 species, especially Asian animals. It is a member of the World Association of Zoos and Aquariums (WAZA) and the European Association of Zoos and Aquaria (EAZA). The zoo is served on its southern side by tram lines 9 and 13 of the Dresdner Verkehrsbetriebe, the local municipal transport company. On its northern side is the Zoo station of the Dresdner Parkeisenbahn, a minimum gauge railway through the Großer Garten that is largely operated by children.\r\n"
 				+ "\r\n" + "";
 		String findStr = "Dresden Hauptbahnhof";
+		System.out.println("scoring started");
 		BM25FScoring bm25fScoring = new BM25FScoring(files, findStr);
-		System.out.println(bm25fScoring.performRanking());
+		// System.out.println(bm25fScoring.performRanking());
 
-		bm25fScoring.isSameEntity("Dresden Railway Station", "Dresden");
+		// bm25fScoring.isSameEntity("hp", "Detroit Red Wings");
+
+		String[] tests = new String[] { "Dresden_Railway_Station", "Detroit Red Wings", "HP", "Bachelor of Arts" };
+		for (String item : tests) {
+			bm25fScoring.doTagging(
+					bm25fScoring.getModel(
+							"/Users/amansharma/git/EntitySearch/EntitySearch/EntitySearch/resources/ner-model.ser.gz"),
+					item);
+		}
 
 	}
 }
