@@ -150,57 +150,6 @@ public class BM25FScoring {
 
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public Map<String, Double> performRanking() {
-
-		docxAndScore = new HashMap<String, Double>();
-
-		for (int i = 0; i < this.files.length; i++) {
-			double wBM25F = 0.0;
-			double tf = 0.0; // sum of all term frequencies
-			double headerWeight = 5.0;
-
-			for (int j = 0; j < this.queryTerms.length; j++) {
-				tf += getTermFrequency(this.files[i], this.queryTerms[j]);
-
-			}
-
-			for (int j = 0; j < this.queryTerms.length; j++) {
-				wBM25F += sigmoid(queryTerms[j], files[i], 1.5, getTermFrequency(files[i], this.queryTerms[j]), tf);
-
-			}
-			// System.out.println(this.originalFiles[i].split(" <HEADER>
-			// ")[0].replaceAll("_", " ").toLowerCase().trim()
-			// + " with " + this.queryTerms[0].toLowerCase().trim());
-			if (this.originalFiles[i].split(" <HEADER> ")[0].replaceAll("_", " ").toLowerCase().trim()
-					.equalsIgnoreCase(this.queryTerms[0].trim())) {
-
-				// NER type check to add weight
-
-//				if(	isSameEntity(this.originalFiles[i].split(" <HEADER> ")[0].replaceAll("_", " ").toLowerCase().trim(),
-//							this.queryTerms[0].trim())) {
-				wBM25F += headerWeight;
-				System.err.println("Header weight added for  " + this.originalFiles[i].split(" <HEADER> ")[0]);
-			}
-			docxAndScore.put(this.originalFiles[i], wBM25F);
-
-		}
-
-		Map sortedMap = new TreeMap(new ValueComparator(docxAndScore));
-		sortedMap.putAll(docxAndScore);
-		return sortedMap;
-
-	}
-
-	public CRFClassifier getModel(String modelPath) {
-		return CRFClassifier.getClassifierNoExceptions(modelPath);
-	}
-
-	public void doTagging(CRFClassifier model, String input) {
-		input = input.trim();
-		System.out.println(input + "=>" + model.classifyToString(input));
-	}
-
 	/*
 	 * 
 	 * NLP Named Entity Recognition
@@ -224,7 +173,7 @@ public class BM25FScoring {
 		// props.setProperty("ner.additional.regexner.validpospattern", "^(NN|JJ).*");
 		// add additional rules, customize TokensRegexNER annotator
 		// props.setProperty("ner.additional.regexner.ignorecase", "true");
-		props.setProperty("ner.useSUTime", "0");
+		// props.setProperty("ner.useSUTime", "0");
 		// props.setProperty("ner.additional.regexner.mapping",
 		// "/Users/amansharma/git/EntitySearch/EntitySearch/EntitySearch/resources/training.rules");
 
@@ -252,16 +201,52 @@ public class BM25FScoring {
 		pipeline.annotate(document2);
 
 		for (CoreEntityMention em : document.entityMentions()) {
-			System.out.println(em.text() + "\t" + em.entityTypeConfidences());
+			// System.out.println(em.text() + "\t" + em.entityTypeConfidences());
+			entity2Type = em.entityTypeConfidences().toString();
 
 		}
-		System.out.println("break()");
+		// System.out.println("break()");
 		// get confidences for tokens
 		for (CoreLabel token : document.tokens()) {
 			// System.out.println(token.word() + "\t" +
 			// token.get(CoreAnnotations.NamedEntityTagProbsAnnotation.class));
-			// entity2Type = token.get(CoreAnnotations.NamedEntityTagProbsAnnotation.class);
+
 		}
+
+		if (entity1Type.equalsIgnoreCase(entity2Type)) {
+			return true;
+		}
+		return false;
+	}
+
+	/*
+	 * Custom NER Model Classifier
+	 */
+	public CRFClassifier getModel(String modelPath) {
+		return CRFClassifier.getClassifierNoExceptions(modelPath);
+	}
+
+	/*
+	 * Custom NER Model Tagger
+	 */
+	public String doTagging(CRFClassifier model, String input) {
+		input = input.trim();
+		System.out.println(input + "=>" + model.classifyToString(input));
+		return model.classifyToString(input);
+	}
+
+	boolean isSameEntityByCustomModel(String entity1, String entity2) {
+		String entity1Type = "";
+		String entity2Type = "";
+
+		entity1Type = this.doTagging(
+				this.getModel(
+						"/Users/amansharma/git/EntitySearch/EntitySearch/EntitySearch/resources/ner-model.ser.gz"),
+				entity1);
+		entity2Type = this.doTagging(
+				this.getModel(
+						"/Users/amansharma/git/EntitySearch/EntitySearch/EntitySearch/resources/ner-model.ser.gz"),
+				entity2);
 
 		if (entity1Type.equalsIgnoreCase(entity2Type)) {
 			return true;
@@ -290,6 +275,47 @@ public class BM25FScoring {
 			stemFile += coreLabel.lemma() + " ";
 		}
 		return stemFile.replaceAll("[^a-z\\s]", "");
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public Map<String, Double> performRanking() {
+
+		docxAndScore = new HashMap<String, Double>();
+
+		for (int i = 0; i < this.files.length; i++) {
+			double wBM25F = 0.0;
+			double tf = 0.0; // sum of all term frequencies
+			double headerWeight = 5.0;
+
+			for (int j = 0; j < this.queryTerms.length; j++) {
+				tf += getTermFrequency(this.files[i], this.queryTerms[j]);
+
+			}
+
+			for (int j = 0; j < this.queryTerms.length; j++) {
+				wBM25F += sigmoid(queryTerms[j], files[i], 1.5, getTermFrequency(files[i], this.queryTerms[j]), tf);
+
+			}
+			// System.out.println(this.originalFiles[i].split(" <HEADER>
+			// ")[0].replaceAll("_", " ").toLowerCase().trim()
+			// + " with " + this.queryTerms[0].toLowerCase().trim());
+			if (this.originalFiles[i].split(" <HEADER> ")[0].replaceAll("_", " ").toLowerCase().trim()
+					.equalsIgnoreCase(this.queryTerms[0].trim())) {
+
+				// NER type check to add weight
+//				if(	isSameEntityByCustomModel(this.originalFiles[i].split(" <HEADER> ")[0].replaceAll("_", " ").toLowerCase().trim(),
+//							this.queryTerms[0].trim())) {
+				wBM25F += headerWeight;
+				System.err.println("Header weight added for  " + this.originalFiles[i].split(" <HEADER> ")[0]);
+			}
+			docxAndScore.put(this.originalFiles[i], wBM25F);
+
+		}
+
+		Map sortedMap = new TreeMap(new ValueComparator(docxAndScore));
+		sortedMap.putAll(docxAndScore);
+		return sortedMap;
+
 	}
 
 	public static void main(String[] args) throws IOException {
@@ -356,7 +382,9 @@ public class BM25FScoring {
 
 		// bm25fScoring.isSameEntity("hp", "Detroit Red Wings");
 
-		String[] tests = new String[] { "Dresden_Railway_Station", "Detroit Red Wings", "HP", "Bachelor of Arts" };
+		String[] tests = new String[] { "Paderborn_Railway_Station", "Detroit_Red_Wings", "HP", "Bachelor_of_Arts",
+				"Berlin_airport", "Manchester United", "Dortmund_Borussia", "Cologne_Church", "Delhi_church",
+				"Dortmund_stadium", "hauptbahnhof" };
 		for (String item : tests) {
 			bm25fScoring.doTagging(
 					bm25fScoring.getModel(
