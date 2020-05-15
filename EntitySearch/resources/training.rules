@@ -1,15 +1,57 @@
-Paderborn CITY
-Railway	RAILWAYSTATION
-Station	RAILWAYSTATION
-
 Bachelor	DEGREE 
 of	O
 Arts	DEGREE
 
 Lalor	LOCATION
 
+Paderborn LOCATION
+
+U.S. LOCATION
+
+US LOCATION
+
+United	LOCATION
+States	LOCATION
+of	O
+America	LOCATION
+
+
+
+Detroit SPORTSTEAM
+Red	O
+Wings	SPORTSTEAM
+
+Borussia	SPORTSTEAM
+Dortmund	SPORTSTEAM
+
+
+Frankfut_Airport AIRPORT
+zürich_Flughafen AIRPORT
+
+Railway	RAILWAY_STATION
+Station	RAILWAY_STATION
+hauptbahnhof	RAILWAY_STATION 
+
+Andrew	PERSON
+Trump	PERSON
+Angela_Merkel	PERSON
+
+
 Labor	ORGANIZATION
 
-Detroit SPORTS_TEAM
-Red	O
-Wings	SPORTS_TEAM
+
+London_Church	ORGANISATION
+
+Vienna_CATHEDRAL	ORGANISATION
+Republican_Party	ORGANISATION
+Indian_Temple	ORGANISATION
+Istanbul_Mosque	ORGANISATION
+National_Park	ORGANISATION
+Munich_Castle	ORGANISATION
+African_Zoo	ORGANISATION
+Lord's_stadium	ORGANISATION
+
+	
+
+
+

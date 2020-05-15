@@ -15,7 +15,6 @@ import java.util.TreeMap;
 import org.apache.commons.lang3.StringUtils;
 
 import edu.stanford.nlp.ie.crf.CRFClassifier;
-import edu.stanford.nlp.ling.CoreAnnotations;
 
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.*;
@@ -118,13 +117,13 @@ public class BM25FScoring {
 	 * 
 	 * where bs is a tunable parameter and
 	 */
-	public double getNormalisationFactor(String file, double bs) {
+	private double getNormalisationFactor(String file, double bs) {
 		int ls = file.length();
 		return (double) ((1 - bs) + (bs * (ls / this.avls)));
 
 	}
 
-	public double getTermFrequency(String file, String queryTerm) {
+	private double getTermFrequency(String file, String queryTerm) {
 		double tfi = 0.0;
 		int tfsi = StringUtils.countMatches(file, queryTerm.toLowerCase());
 
@@ -159,23 +158,13 @@ public class BM25FScoring {
 	 * 
 	 */
 
-	boolean isSameEntity(String entity1, String entity2) {
+	private boolean isSameEntity(String entity1, String entity2) {
 		String entity1Type = "";
 		String entity2Type = "";
 
 		Properties props = new Properties();
-		// props.put("annotators", "tokenize, ssplit, pos, lemma, ner, regexner");
-		// props.put("regexner.mapping",
-		// "/Users/amansharma/git/EntitySearch/EntitySearch/EntitySearch/resources/training.rules");
 
 		props.setProperty("annotators", "tokenize,ssplit,pos,lemma,ner");
-
-		// props.setProperty("ner.additional.regexner.validpospattern", "^(NN|JJ).*");
-		// add additional rules, customize TokensRegexNER annotator
-		// props.setProperty("ner.additional.regexner.ignorecase", "true");
-		// props.setProperty("ner.useSUTime", "0");
-		// props.setProperty("ner.additional.regexner.mapping",
-		// "/Users/amansharma/git/EntitySearch/EntitySearch/EntitySearch/resources/training.rules");
 
 		StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
 		pipeline.addAnnotator(new TokensRegexAnnotator(
@@ -192,8 +181,7 @@ public class BM25FScoring {
 		System.out.println("break()");
 		// get confidences for tokens
 		for (CoreLabel token : document.tokens()) {
-			// System.out.println(token.word() + "\t" +
-			// token.get(CoreAnnotations.NamedEntityTagProbsAnnotation.class));
+
 		}
 
 		// get confidences for entity2
@@ -201,15 +189,12 @@ public class BM25FScoring {
 		pipeline.annotate(document2);
 
 		for (CoreEntityMention em : document.entityMentions()) {
-			// System.out.println(em.text() + "\t" + em.entityTypeConfidences());
+
 			entity2Type = em.entityTypeConfidences().toString();
 
 		}
-		// System.out.println("break()");
 		// get confidences for tokens
 		for (CoreLabel token : document.tokens()) {
-			// System.out.println(token.word() + "\t" +
-			// token.get(CoreAnnotations.NamedEntityTagProbsAnnotation.class));
 
 		}
 
@@ -222,20 +207,22 @@ public class BM25FScoring {
 	/*
 	 * Custom NER Model Classifier
 	 */
-	public CRFClassifier getModel(String modelPath) {
+	@SuppressWarnings("rawtypes")
+	private CRFClassifier getModel(String modelPath) {
 		return CRFClassifier.getClassifierNoExceptions(modelPath);
 	}
 
 	/*
 	 * Custom NER Model Tagger
 	 */
-	public String doTagging(CRFClassifier model, String input) {
+	@SuppressWarnings("rawtypes")
+	private String doTagging(CRFClassifier model, String input) {
 		input = input.trim();
 		System.out.println(input + "=>" + model.classifyToString(input));
 		return model.classifyToString(input);
 	}
 
-	boolean isSameEntityByCustomModel(String entity1, String entity2) {
+	private boolean isSameEntityByCustomModel(String entity1, String entity2) {
 		String entity1Type = "";
 		String entity2Type = "";
 
@@ -254,13 +241,21 @@ public class BM25FScoring {
 		return false;
 	}
 
+	private String getEntityType(String entity) {
+		return this.doTagging(
+				this.getModel(
+						"/Users/amansharma/git/EntitySearch/EntitySearch/EntitySearch/resources/ner-model.ser.gz"),
+				entity);
+
+	}
+
 	/*
 	 * Lemmatization
 	 * 
 	 * This method normalize each word in the document to its lemma / stem form
 	 * 
 	 */
-	public String getStemDocument(String originalFile) {
+	private String getStemDocument(String originalFile) {
 
 		String stemFile = "";
 		Properties props = new Properties();
@@ -296,19 +291,22 @@ public class BM25FScoring {
 				wBM25F += sigmoid(queryTerms[j], files[i], 1.5, getTermFrequency(files[i], this.queryTerms[j]), tf);
 
 			}
-			// System.out.println(this.originalFiles[i].split(" <HEADER>
-			// ")[0].replaceAll("_", " ").toLowerCase().trim()
-			// + " with " + this.queryTerms[0].toLowerCase().trim());
-			if (this.originalFiles[i].split(" <HEADER> ")[0].replaceAll("_", " ").toLowerCase().trim()
-					.equalsIgnoreCase(this.queryTerms[0].trim())) {
 
-				// NER type check to add weight
-//				if(	isSameEntityByCustomModel(this.originalFiles[i].split(" <HEADER> ")[0].replaceAll("_", " ").toLowerCase().trim(),
-//							this.queryTerms[0].trim())) {
+			// if (this.originalFiles[i].split(" <HEADER> ")[0].replaceAll("_", "
+			// ").toLowerCase().trim()
+			// .equalsIgnoreCase(this.queryTerms[0].trim())) {
+
+			// NER type check to add weight
+			if (isSameEntityByCustomModel(
+					this.originalFiles[i].split(" <HEADER> ")[0].replaceAll("_", " ").toLowerCase().trim(),
+					this.queryTerms[0].trim())) {
 				wBM25F += headerWeight;
 				System.err.println("Header weight added for  " + this.originalFiles[i].split(" <HEADER> ")[0]);
-			}
-			docxAndScore.put(this.originalFiles[i], wBM25F);
+			}			
+			
+			// append Entity type at the end.
+			//docxAndScore.put(this.originalFiles[i]+"<ENTITYTYPE>"+getEntityType(this.originalFiles[i].split(" <HEADER> ")[0]), wBM25F);
+			docxAndScore.put(this.originalFiles[i], wBM25F); 
 
 		}
 
