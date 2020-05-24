@@ -23,7 +23,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class ScoringService {
 
 	public ScoringService() {
-
 	}
 
 	@GET
@@ -85,14 +84,6 @@ public class ScoringService {
 			files[i] = fileList.get(i);
 		}
 		BM25FScoring bm25fScoring = new BM25FScoring(files, queryTerms);
-		// System.out.println(bm25fScoring.performRanking());
-		/*
-		 * String json = ""; StringBuilder builder = new StringBuilder();
-		 * builder.append("{\n"); for (Map.Entry<String, Double> entry :
-		 * bm25fScoring.performRanking().entrySet()) builder.append("'" + entry.getKey()
-		 * + "' : '" + entry.getValue() + "'," + "\n"); builder.append("}"); json =
-		 * builder.toString(); return json;
-		 */
 		ServiceResponse[] responses = new ServiceResponse[bm25fScoring.performRanking().size()];
 		int index = 0;
 		for (Map.Entry<String, Double> entry : bm25fScoring.performRanking().entrySet()) {

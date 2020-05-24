@@ -1,26 +1,39 @@
-$TITLES_CORPORATE = (/chief/ /administrative/ /officer/|cao|ceo|/chief/ /executive/ /officer/|/chairman/|/vice/ /president/)
-$ORGANIZATION_TITLES = (/International/|/inc\./|/corp/|/llc/)
-# For detecting organization names like 'Paragonix Inc.'
-{ ruleType: "tokens",
-pattern: ([{pos: NNP}]+ $ORGANIZATION_TITLES),
-action: ( Annotate($0, ner, "ORGANIZATION"),Annotate($1, ner, "ORGANIZATION") )
-}
-# For extracting organization names from a pattern - 'Genome International is planning to expand its operations in China.'
-#(in the sentence given above the words planning and expand are part of the $OrgContextWords macros )
-{
-ruleType: "tokens",
-pattern: (([{tag:/NNP.*/}]+) /,/*? /is|had|has|will|would/*? /has|had|have|will/*? /be|been|being/*? (?:[]{0,5}[{lemma:$OrgContextWords}]) /of|in|with|for|to|at|like|on/*?),
-result: ( Annotate($1, ner, "ORGANIZATION") )
-}
-# For sentence like - Bill Edelman, Chairman and CEO of Paragonix Inc./ Zuckerberg CEO Facebook said today....
-ENV.defaults["stage"] = 1
-{
-pattern: ( $TITLES_CORPORATE ),
-action: ( Annotate($1, ner, "PERSON_TITLE"))
-}
-ENV.defaults["stage"] = 2
-{
-ruleType: "tokens",
-pattern: ( ([ { pos:NNP} ]+) /,/*? (?:TITLES_CORPORATE)? /and|&/*? (?:TITLES_CORPORATE)? /,/*? /of|for/? /,/*? [ { pos:NNP } ]+ ),
-result: (Annotate($1, ner, "PERSON"),Annotate($2, ner, "ORGANIZATION"))
-}
+Bachelor	DEGREE 
+of	O
+Arts	DEGREE
+
+Lalor	LOCATION
+Paderborn LOCATION
+U.S. LOCATION
+US LOCATION
+United	LOCATION
+States	LOCATION
+of	O
+America	LOCATION
+
+
+Labor	ORGANIZATION
+
+Detroit SPORTSTEAM
+Red	O
+Wings	SPORTSTEAM
+
+Airport AIRPORT
+Flughafen AIRPORT
+
+Railway	RAILWAY_STATION
+Station	RAILWAY_STATION
+hauptbahnhof	RAILWAY_STATION 
+
+Andrew	PERSON
+Trump	PERSON
+
+
+Church	ORGANISATION
+CATHEDRAL	ORGANISATION
+Republicans	ORGANISATION
+Temple	ORGANISATION
+Mosque	ORGANISATION
+Park	ORGANISATION
+Castle	ORGANISATION
+Zoo	ORGANISATION
