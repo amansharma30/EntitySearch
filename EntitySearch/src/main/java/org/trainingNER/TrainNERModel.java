@@ -19,7 +19,7 @@ public class TrainNERModel {
 		}
 
 		SeqClassifierFlags flags = new SeqClassifierFlags(props);
-		CRFClassifier<CoreLabel> crf = new CRFClassifier<>(flags);
+		CRFClassifier<CoreLabel> crf = new CRFClassifier<CoreLabel>(flags);
 		crf.train();
 
 		crf.serializeClassifier(modelOutPath);
