@@ -120,7 +120,7 @@ public class BM25FScoring {
 	 * 
 	 * where bs is a tunable parameter
 	 */
-	private double getNormalisationFactor(String file, double bs) {
+	public double getNormalisationFactor(String file, double bs) {
 		int ls = file.length();
 		return (double) ((1 - bs) + (bs * (ls / this.avls)));
 
@@ -130,7 +130,7 @@ public class BM25FScoring {
 	 * 
 	 * THis method returns the term frequency of the query term in a document
 	 */
-	private double getTermFrequency(String file, String queryTerm) {
+	public double getTermFrequency(String file, String queryTerm) {
 		double tfi = 0.0;
 		int tfsi = StringUtils.countMatches(file, queryTerm.toLowerCase());
 
@@ -140,7 +140,7 @@ public class BM25FScoring {
 
 	}
 
-	private double sigmoid(String querStringTerm, String file, double k1, double tfi, double tf) {
+	public double sigmoid(String querStringTerm, String file, double k1, double tfi, double tf) {
 
 		int ni = 0; // ni is the number of documents i occurs in.
 		if (queryTermFrequencyInDocx.containsKey(querStringTerm.toLowerCase())) {
@@ -151,7 +151,7 @@ public class BM25FScoring {
 		double wiIDF = Math.log(1 + (documentCount - ni + 0.5) / (ni + 0.5));// wiIDF is inverse document frequency
 		// sigmoid function
 		double wiBM25F = (tf / (k1 + tfi)) * wiIDF;
-
+		System.out.println("wi " +wiIDF+"\nwiBM25F "+wiBM25F+"\n ni "+ni+"\n count"+documentCount+"\n tf"+tf+"\n tfi"+tfi+"\n\n\n"+Math.log(5));
 		return wiBM25F;
 
 	}
@@ -165,7 +165,7 @@ public class BM25FScoring {
 	 * 
 	 */
 
-	private boolean isSameEntity(String entity1, String entity2) {
+	public boolean isSameEntity(String entity1, String entity2) {
 		String entity1Type = "";
 		String entity2Type = "";
 
@@ -218,7 +218,7 @@ public class BM25FScoring {
 	 * Custom NER Model Classifier
 	 */
 	@SuppressWarnings("rawtypes")
-	private CRFClassifier getModel(String modelPath) {
+	public CRFClassifier getModel(String modelPath) {
 		return CRFClassifier.getClassifierNoExceptions(modelPath);
 	}
 
@@ -226,13 +226,13 @@ public class BM25FScoring {
 	 * Custom NER Model Tagger
 	 */
 	@SuppressWarnings("rawtypes")
-	private String doTagging(CRFClassifier model, String input) {
+	public String doTagging(CRFClassifier model, String input) {
 		input = input.trim();
 		System.out.println(input + "=>" + model.classifyToString(input));
 		return model.classifyToString(input);
 	}
 
-	private boolean isSameEntityByCustomModel(String entity1, String entity2) {
+	public boolean isSameEntityByCustomModeg(String entity1, String entity2) {
 		String entity1Type = "";
 		String entity2Type = "";
 
@@ -251,7 +251,7 @@ public class BM25FScoring {
 		return false;
 	}
 
-	private String getEntityType(String entity) {
+	public String getEntityType(String entity) {
 		return this.doTagging(
 				this.getModel(
 						"/Users/amansharma/git/EntitySearch/EntitySearch/EntitySearch/resources/ner-model.ser.gz"),
@@ -265,7 +265,7 @@ public class BM25FScoring {
 	 * This method normalize each word in the document to its lemma / stem form
 	 * 
 	 */
-	private String getStemDocument(String originalFile) {
+	public String getStemDocument(String originalFile) {
 
 		String stemFile = "";
 		Properties props = new Properties();
