@@ -182,16 +182,16 @@ public class BM25FScoring {
 		// get confidences for entity1
 		for (CoreEntityMention em : document.entityMentions()) {
 			// System.out.println(em.text() + "\t" + em.entityTypeConfidences());
-			System.out.println("\tdetected entity: \t" + em.text() + "\t" + em.entityType());
-			entity1Type = em.entityTypeConfidences().toString();
+		//	System.out.println("\tdetected entity: \t" + em.text() + "\t" + em.entityType());
+			entity1Type = em.entityType(); //em.entityTypeConfidences().toString();
 
 		}
-		// System.out.println("break()");
+		
 		// get confidences for tokens
-		for (CoreLabel token : document.tokens()) {
+	//	for (CoreLabel token : document.tokens()) {
 			// System.out.println(token.word() + "\t" +
 			// token.get(CoreAnnotations.NamedEntityTagProbsAnnotation.class));
-		}
+	//	}
 
 		// get confidences for entity2
 		CoreDocument document2 = new CoreDocument(entity2);
@@ -199,14 +199,14 @@ public class BM25FScoring {
 
 		for (CoreEntityMention em : document.entityMentions()) {
 			System.out.println("\tdetected entity: \t" + em.text() + "\t" + em.entityType());
-			entity2Type = em.entityTypeConfidences().toString();
+			entity2Type = em.entityType(); //em.entityTypeConfidences().toString();
 
 		}
 		// get confidences for tokens
-		for (CoreLabel token : document.tokens()) {
+	//	for (CoreLabel token : document.tokens()) {
 			// System.out.println(token.word() + "\t" +
 			// token.get(CoreAnnotations.NamedEntityTagProbsAnnotation.class));
-		}
+	//	}
 
 		if (entity1Type.equalsIgnoreCase(entity2Type)) {
 			return true;
@@ -252,11 +252,27 @@ public class BM25FScoring {
 	}
 
 	private String getEntityType(String entity) {
-		return this.doTagging(
-				this.getModel(
-						"/Users/amansharma/git/EntitySearch/EntitySearch/EntitySearch/resources/ner-model.ser.gz"),
-				entity);
+		//return this.doTagging(
+		//		this.getModel(
+		//				"/Users/amansharma/git/EntitySearch/EntitySearch/EntitySearch/resources/ner-model.ser.gz"),
+		//		entity);
 
+		String entity1Type = "";		
+
+		Properties props = new Properties();
+
+		props.setProperty("annotators", "tokenize,ssplit,pos,lemma,ner");
+
+		StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
+		CoreDocument document = new CoreDocument(entity);
+		pipeline.annotate(document);
+		for (CoreEntityMention em : document.entityMentions()) {
+			
+			System.out.println("\tdetected entity: \t" + em.text() + "\t" + em.entityType());
+			entity1Type = em.entityType();//em.entityTypeConfidences().toString();
+
+		}
+		return entity1Type;
 	}
 
 	/*
@@ -309,18 +325,25 @@ public class BM25FScoring {
 			// NER type check to add weight
 			if (isSameEntity(this.originalFiles[i].split(" <HEADER> ")[0].replaceAll("_", " ").toLowerCase().trim(),
 					this.queryTerms[0].trim())) {
-				wBM25F += entitySameWeight;
-				if (this.originalFiles[i].split(" <HEADER> ")[0].replaceAll("_", " ").toLowerCase().trim()
-						.equalsIgnoreCase(this.queryTerms[0].trim())) {
-					wBM25F += headerWeight;
-				}
+				wBM25F += entitySameWeight;			
+			}
+			if (this.originalFiles[i].split(" <HEADER> ")[0].replaceAll("_", " ").toLowerCase().trim()
+					.equalsIgnoreCase(this.queryTerms[0].trim())) {
+				wBM25F += headerWeight;
 				System.err.println("Header weight added for  " + this.originalFiles[i].split(" <HEADER> ")[0]);
 			}
-
 			// append Entity type at the end.
-			// docxAndScore.put(this.originalFiles[i]+"<ENTITYTYPE>"+getEntityType(this.originalFiles[i].split("
-			// <HEADER> ")[0]), wBM25F);
-			docxAndScore.put(this.originalFiles[i], wBM25F);
+			String entityType="";
+			if (!getEntityType(this.originalFiles[i].split(" <HEADER> ")[0]).equals("")) {
+				entityType = getEntityType(this.originalFiles[i].split(" <HEADER> ")[0]);
+			}
+			else {
+				entityType = "O";
+			}
+			docxAndScore.put(
+					this.originalFiles[i] + "<ENTITYTYPE>" + entityType,
+					wBM25F);
+			// docxAndScore.put(this.originalFiles[i], wBM25F);
 
 		}
 
@@ -391,7 +414,7 @@ public class BM25FScoring {
 
 		System.out.println("scoring started");
 		BM25FScoring bm25fScoring = new BM25FScoring(files, findStr);
-		// System.out.println(bm25fScoring.performRanking());
+		 System.out.println(bm25fScoring.performRanking());
 
 		// bm25fScoring.isSameEntity("Dortmund", "Paderborn");
 		String[] tests = new String[] { "Paderborn Railway Station", "Detroit Red Wings", "HP", "Bachelor of Arts",
@@ -401,7 +424,7 @@ public class BM25FScoring {
 			// bm25fScoring.getModel(
 			// "/Users/amansharma/git/EntitySearch/EntitySearch/EntitySearch/resources/ner-model.ser.gz"),
 			// item);
-			bm25fScoring.isSameEntity(item, item);
+			//bm25fScoring.isSameEntity(item, item);
 		}
 
 	}
