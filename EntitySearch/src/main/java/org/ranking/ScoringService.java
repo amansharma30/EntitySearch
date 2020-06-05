@@ -39,7 +39,7 @@ public class ScoringService {
 		int index = 0;
 		for (Map.Entry<String, Double> entry : elements.entrySet()) {
 
-			responses[index] = new ServiceResponse("", entry.getKey(), entry.getValue());
+			responses[index] = new ServiceResponse("", entry.getKey(), entry.getValue(), "ENTITYTYPE");
 
 			index++;
 		}
@@ -76,7 +76,7 @@ public class ScoringService {
 		String file = "";
 		for (Triple triple : list) {
 			// file = triple.getObject() + triple.getSubject() + triple.getPredicate();
-			file = triple.getPredicate() + "<HEADER>" + triple.getSubject();
+			file = triple.getPredicate() + " <HEADER> " + triple.getSubject();
 			fileList.add(file);
 		}
 		String[] files = new String[fileList.size()];
@@ -87,10 +87,17 @@ public class ScoringService {
 		ServiceResponse[] responses = new ServiceResponse[bm25fScoring.performRanking().size()];
 		int index = 0;
 		for (Map.Entry<String, Double> entry : bm25fScoring.performRanking().entrySet()) {
+			String entityType = "";
+			if (!entry.getKey().split("<ENTITYTYPE>")[1].equalsIgnoreCase("")
+					|| entry.getKey().split("<ENTITYTYPE>")[1] != null) {
+				entityType = (entry.getKey().split("<ENTITYTYPE>")[1]); //.split("=")[0];
+			} else {
+				entityType = "O";
+			}
 
 			responses[index] = new ServiceResponse(
-					"http://dbpedia.org/resource/" + entry.getKey().split("<HEADER>")[0] + "",
-					entry.getKey().split("<HEADER>")[0], entry.getValue());
+					"http://dbpedia.org/resource/" + entry.getKey().split(" <HEADER> ")[0] + "",
+					entry.getKey().split(" <HEADER> ")[0], entry.getValue(), entityType);
 
 			index++;
 		}
@@ -115,6 +122,8 @@ public class ScoringService {
 	}
 
 	public static void main(String[] args) throws IOException {
-		System.out.println(new ScoringService().getDocuments("Dresden"));
+	//	System.out.println(new ScoringService().getDocuments("Dresden"));
+		System.out.println(new ScoringService().getString());
+
 	}
 }
