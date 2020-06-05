@@ -4,22 +4,32 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 class ServiceResponse {
 
-	 
 	@JsonProperty
 	String url;
 	@JsonProperty
 	String label;
 	@JsonProperty
 	double pagerank;
+	@JsonProperty
+	String entityType;
 
 	ServiceResponse() {
 
 	}
 
-	ServiceResponse(String url, String label, double pagerank) {
+	public String getEntityType() {
+		return entityType;
+	}
+
+	public void setEntityType(String entityType) {
+		this.entityType = entityType;
+	}
+
+	ServiceResponse(String url, String label, double pagerank, String entityType) {
 		this.label = label;
 		this.pagerank = pagerank;
 		this.url = url;
+		this.entityType = entityType;
 	}
 
 	public String getUrl() {
