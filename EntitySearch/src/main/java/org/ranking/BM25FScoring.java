@@ -120,7 +120,7 @@ public class BM25FScoring {
 	 * 
 	 * where bs is a tunable parameter
 	 */
-	public double getNormalisationFactor(String file, double bs) {
+	private double getNormalisationFactor(String file, double bs) {
 		int ls = file.length();
 		return (double) ((1 - bs) + (bs * (ls / this.avls)));
 
@@ -130,7 +130,7 @@ public class BM25FScoring {
 	 * 
 	 * THis method returns the term frequency of the query term in a document
 	 */
-	public double getTermFrequency(String file, String queryTerm) {
+	private double getTermFrequency(String file, String queryTerm) {
 		double tfi = 0.0;
 		int tfsi = StringUtils.countMatches(file, queryTerm.toLowerCase());
 
@@ -140,7 +140,7 @@ public class BM25FScoring {
 
 	}
 
-	public double sigmoid(String querStringTerm, String file, double k1, double tfi, double tf) {
+	private double sigmoid(String querStringTerm, String file, double k1, double tfi, double tf) {
 
 		int ni = 0; // ni is the number of documents i occurs in.
 		if (queryTermFrequencyInDocx.containsKey(querStringTerm.toLowerCase())) {
@@ -151,7 +151,7 @@ public class BM25FScoring {
 		double wiIDF = Math.log(1 + (documentCount - ni + 0.5) / (ni + 0.5));// wiIDF is inverse document frequency
 		// sigmoid function
 		double wiBM25F = (tf / (k1 + tfi)) * wiIDF;
-		System.out.println("wi " +wiIDF+"\nwiBM25F "+wiBM25F+"\n ni "+ni+"\n count"+documentCount+"\n tf"+tf+"\n tfi"+tfi+"\n\n\n"+Math.log(5));
+
 		return wiBM25F;
 
 	}
@@ -165,7 +165,7 @@ public class BM25FScoring {
 	 * 
 	 */
 
-	public boolean isSameEntity(String entity1, String entity2) {
+	private boolean isSameEntity(String entity1, String entity2) {
 		String entity1Type = "";
 		String entity2Type = "";
 
@@ -182,16 +182,16 @@ public class BM25FScoring {
 		// get confidences for entity1
 		for (CoreEntityMention em : document.entityMentions()) {
 			// System.out.println(em.text() + "\t" + em.entityTypeConfidences());
-			System.out.println("\tdetected entity: \t" + em.text() + "\t" + em.entityType());
-			entity1Type = em.entityTypeConfidences().toString();
+		//	System.out.println("\tdetected entity: \t" + em.text() + "\t" + em.entityType());
+			entity1Type = em.entityType(); //em.entityTypeConfidences().toString();
 
 		}
-		// System.out.println("break()");
+		
 		// get confidences for tokens
-		for (CoreLabel token : document.tokens()) {
+	//	for (CoreLabel token : document.tokens()) {
 			// System.out.println(token.word() + "\t" +
 			// token.get(CoreAnnotations.NamedEntityTagProbsAnnotation.class));
-		}
+	//	}
 
 		// get confidences for entity2
 		CoreDocument document2 = new CoreDocument(entity2);
@@ -199,14 +199,14 @@ public class BM25FScoring {
 
 		for (CoreEntityMention em : document.entityMentions()) {
 			System.out.println("\tdetected entity: \t" + em.text() + "\t" + em.entityType());
-			entity2Type = em.entityTypeConfidences().toString();
+			entity2Type = em.entityType(); //em.entityTypeConfidences().toString();
 
 		}
 		// get confidences for tokens
-		for (CoreLabel token : document.tokens()) {
+	//	for (CoreLabel token : document.tokens()) {
 			// System.out.println(token.word() + "\t" +
 			// token.get(CoreAnnotations.NamedEntityTagProbsAnnotation.class));
-		}
+	//	}
 
 		if (entity1Type.equalsIgnoreCase(entity2Type)) {
 			return true;
@@ -218,7 +218,7 @@ public class BM25FScoring {
 	 * Custom NER Model Classifier
 	 */
 	@SuppressWarnings("rawtypes")
-	public CRFClassifier getModel(String modelPath) {
+	private CRFClassifier getModel(String modelPath) {
 		return CRFClassifier.getClassifierNoExceptions(modelPath);
 	}
 
@@ -226,13 +226,13 @@ public class BM25FScoring {
 	 * Custom NER Model Tagger
 	 */
 	@SuppressWarnings("rawtypes")
-	public String doTagging(CRFClassifier model, String input) {
+	private String doTagging(CRFClassifier model, String input) {
 		input = input.trim();
 		System.out.println(input + "=>" + model.classifyToString(input));
 		return model.classifyToString(input);
 	}
 
-	public boolean isSameEntityByCustomModeg(String entity1, String entity2) {
+	private boolean isSameEntityByCustomModel(String entity1, String entity2) {
 		String entity1Type = "";
 		String entity2Type = "";
 
@@ -251,12 +251,28 @@ public class BM25FScoring {
 		return false;
 	}
 
-	public String getEntityType(String entity) {
-		return this.doTagging(
-				this.getModel(
-						"/Users/amansharma/git/EntitySearch/EntitySearch/EntitySearch/resources/ner-model.ser.gz"),
-				entity);
+	private String getEntityType(String entity) {
+		//return this.doTagging(
+		//		this.getModel(
+		//				"/Users/amansharma/git/EntitySearch/EntitySearch/EntitySearch/resources/ner-model.ser.gz"),
+		//		entity);
 
+		String entity1Type = "";		
+
+		Properties props = new Properties();
+
+		props.setProperty("annotators", "tokenize,ssplit,pos,lemma,ner");
+
+		StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
+		CoreDocument document = new CoreDocument(entity);
+		pipeline.annotate(document);
+		for (CoreEntityMention em : document.entityMentions()) {
+			
+			System.out.println("\tdetected entity: \t" + em.text() + "\t" + em.entityType());
+			entity1Type = em.entityType();//em.entityTypeConfidences().toString();
+
+		}
+		return entity1Type;
 	}
 
 	/*
@@ -265,7 +281,7 @@ public class BM25FScoring {
 	 * This method normalize each word in the document to its lemma / stem form
 	 * 
 	 */
-	public String getStemDocument(String originalFile) {
+	private String getStemDocument(String originalFile) {
 
 		String stemFile = "";
 		Properties props = new Properties();
@@ -309,18 +325,25 @@ public class BM25FScoring {
 			// NER type check to add weight
 			if (isSameEntity(this.originalFiles[i].split(" <HEADER> ")[0].replaceAll("_", " ").toLowerCase().trim(),
 					this.queryTerms[0].trim())) {
-				wBM25F += entitySameWeight;
-				if (this.originalFiles[i].split(" <HEADER> ")[0].replaceAll("_", " ").toLowerCase().trim()
-						.equalsIgnoreCase(this.queryTerms[0].trim())) {
-					wBM25F += headerWeight;
-				}
+				wBM25F += entitySameWeight;			
+			}
+			if (this.originalFiles[i].split(" <HEADER> ")[0].replaceAll("_", " ").toLowerCase().trim()
+					.equalsIgnoreCase(this.queryTerms[0].trim())) {
+				wBM25F += headerWeight;
 				System.err.println("Header weight added for  " + this.originalFiles[i].split(" <HEADER> ")[0]);
 			}
-
 			// append Entity type at the end.
-			// docxAndScore.put(this.originalFiles[i]+"<ENTITYTYPE>"+getEntityType(this.originalFiles[i].split("
-			// <HEADER> ")[0]), wBM25F);
-			docxAndScore.put(this.originalFiles[i], wBM25F);
+			String entityType="";
+			if (!getEntityType(this.originalFiles[i].split(" <HEADER> ")[0]).equals("")) {
+				entityType = getEntityType(this.originalFiles[i].split(" <HEADER> ")[0]);
+			}
+			else {
+				entityType = "O";
+			}
+			docxAndScore.put(
+					this.originalFiles[i] + "<ENTITYTYPE>" + entityType,
+					wBM25F);
+			// docxAndScore.put(this.originalFiles[i], wBM25F);
 
 		}
 
@@ -391,7 +414,7 @@ public class BM25FScoring {
 
 		System.out.println("scoring started");
 		BM25FScoring bm25fScoring = new BM25FScoring(files, findStr);
-		// System.out.println(bm25fScoring.performRanking());
+		 System.out.println(bm25fScoring.performRanking());
 
 		// bm25fScoring.isSameEntity("Dortmund", "Paderborn");
 		String[] tests = new String[] { "Paderborn Railway Station", "Detroit Red Wings", "HP", "Bachelor of Arts",
@@ -401,7 +424,7 @@ public class BM25FScoring {
 			// bm25fScoring.getModel(
 			// "/Users/amansharma/git/EntitySearch/EntitySearch/EntitySearch/resources/ner-model.ser.gz"),
 			// item);
-			bm25fScoring.isSameEntity(item, item);
+			//bm25fScoring.isSameEntity(item, item);
 		}
 
 	}
