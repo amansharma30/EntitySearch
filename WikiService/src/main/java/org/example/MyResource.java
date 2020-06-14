@@ -1,10 +1,11 @@
-package org.aksw.agdistis.util.*;
+package org.aksw.agdistis;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.util.Arrays;
 import java.util.List;
-import
+import org.aksw.agdistis.util.GetWikiData;
+
 
 
 @Path("myresource")
