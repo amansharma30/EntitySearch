@@ -1,6 +1,10 @@
 package org.ranking;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -11,13 +15,28 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Form;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.UriBuilder;
+
 import org.aksw.agdistis.util.Triple;
 import org.aksw.agdistis.util.TripleIndexContext;
+//import org.aksw.agdistis.webapp.WikiDataService;
+import org.apache.commons.io.IOUtils;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.ClientResponse;
+
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import com.sun.jersey.multipart.FormDataMultiPart;
+import com.sun.jersey.multipart.MultiPart;
 
 /**
  * Service class to return the BM25F scoring API Response
@@ -30,8 +49,7 @@ public class ScoringService {
 
 	public ScoringService() {
 	}
-	
-	
+
 	/*
 	 * service method to return Response from DBPedia
 	 */
@@ -76,7 +94,6 @@ public class ScoringService {
 
 		String writer = null;
 		try {
-			// mapper.writeValue(stringWriter, stringWriter);
 			writer = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(responses);
 		} catch (JsonGenerationException e) {
 			e.printStackTrace();
@@ -89,24 +106,65 @@ public class ScoringService {
 	}
 
 	/*
-	 * service method to return Response from wikiData
+	 * service method to return Response from wikiData. This service makes a GET
+	 * request to AGDISTIS to fetch documents from index.
 	 */
 
-	@SuppressWarnings("unchecked")
 	@GET
-	@Path("/getDocumentsFromWikiPedia")
+	@Path("/getDocumentsFromWikiData")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getDocumentsFromWikiPedia(@QueryParam("q") String queryTerms) throws IOException {
+		String writer = null;
+		String termsArray[] = queryTerms.split(" ");
+		StringBuffer designedQueryTerms = new StringBuffer();
+		for (int i = 0; i < termsArray.length; i++) {
+			designedQueryTerms.append(capitailizeWord(termsArray[i]));
+			designedQueryTerms.append(" ");
+		}
+		designedQueryTerms.deleteCharAt(designedQueryTerms.length() - 1);
+		System.out.println("Searched entity" + designedQueryTerms.toString());
+
 		List<WikiDataResponse> wikiDataResponseList = new ArrayList<WikiDataResponse>();
 		ArrayList<String> fileList = new ArrayList<String>();
 
-		Client client = ClientBuilder.newClient();
-		String wikiDataServerURL = "http://localhost:8080/WikiDataService_war/webapi/myresource/fetchDocx?q=";
-		String requestURL = wikiDataServerURL + queryTerms;
-		WebTarget target = client.target(requestURL);
-		wikiDataResponseList = (List<WikiDataResponse>) target.request(MediaType.APPLICATION_JSON).get(List.class);
+		try {
 
-		// Response copying to fileList object
+			com.sun.jersey.api.client.Client sunClient = com.sun.jersey.api.client.Client.create();
+
+			com.sun.jersey.api.client.WebResource webResource = sunClient.resource(
+					"http://localhost:8080/AGDISTIS?entity=" + URLEncoder.encode(designedQueryTerms.toString() + ""));
+
+			String response = webResource.get(String.class);
+
+			String responseArray[] = response.split("\n");
+			for (String responseString : responseArray) {
+
+				if (!responseString.equalsIgnoreCase("")) {
+
+					String wikiDataParts[] = responseString.split("\t");
+					WikiDataResponse dataResponseTemp = new WikiDataResponse();
+					dataResponseTemp.setDescription(wikiDataParts[0]);
+					dataResponseTemp.setUrl(wikiDataParts[1]);
+					dataResponseTemp.setLabel(wikiDataParts[2]);
+					dataResponseTemp.setUnique_identifier(wikiDataParts[3]);
+
+					wikiDataResponseList.add(dataResponseTemp);
+				}
+			}
+
+		} catch (com.sun.jersey.api.client.UniformInterfaceException e) {
+
+			// writer ="";
+			// return writer;
+
+		} catch (Exception e) {
+
+			// e.printStackTrace();
+			// writer ="";
+			// return writer;
+
+		}
+
 		String file = "";
 		for (WikiDataResponse response : wikiDataResponseList) {
 			file = response.label + " <HEADER> " + response.description + " <URL> " + response.Url;
@@ -137,9 +195,7 @@ public class ScoringService {
 
 		ObjectMapper mapper = new ObjectMapper();
 
-		String writer = null;
 		try {
-			// mapper.writeValue(stringWriter, stringWriter);
 			writer = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(responses);
 		} catch (JsonGenerationException e) {
 			e.printStackTrace();
@@ -159,7 +215,7 @@ public class ScoringService {
 	@GET
 	@Path("/text")
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getString() {
+	public String getString(@QueryParam("q") String queryTerms) {
 
 		Map<String, Double> elements = new HashMap<String, Double>();
 		elements.put("Key1", 0.5);
@@ -181,23 +237,48 @@ public class ScoringService {
 			// mapper.writeValue(stringWriter, stringWriter);
 			writer = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(responses);
 		} catch (JsonGenerationException e) {
-			// TODO Auto-generated catch block
+
 			e.printStackTrace();
 		} catch (JsonMappingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		writer = "[{\n" + "	\"disambiguatedURL\": \"http:\\/\\/www.wikidata.org\\/entity\\/Q13909\",\n"
-				+ "	\"offset\": 14,\n" + "	\"namedEntity\": \"Angelina Jolie\",\n" + "	\"start\": 1\n" + "}]";
+		writer = "[{\n" + "	\"url\": \"http:\\/\\/www.wikidata.org\\/entity\\/Q13909\"," + "\n"
+				+ "	\"label\": \"Angelina Jolie\"," + "\n" + "	\"pagerank\": 1" + "\n" + "	\"entityType\": PERSON,"
+				+ "\n" + "}," + "{\n" + "\"url\" : \"http://www.wikidata.org/entity/Q37539174\",\n"
+				+ "\"label\" : \"Dresden\",\n" + "\"pagerank\" : 7.047880028685326,\n" + "\"entityType\" : \"CITY\"\n"
+				+ "}]";
 		return writer;
 	}
 
+	static String capitailizeWord(String str) {
+		StringBuffer s = new StringBuffer();
+
+		// Declare a character of space
+		// To identify that the next character is the starting
+		// of a new word
+		char ch = ' ';
+		for (int i = 0; i < str.length(); i++) {
+
+			// If previous character is space and current
+			// character is not space then it shows that
+			// current letter is the starting of the word
+			if (ch == ' ' && str.charAt(i) != ' ')
+				s.append(Character.toUpperCase(str.charAt(i)));
+			else
+				s.append(str.charAt(i));
+			ch = str.charAt(i);
+		}
+
+		// Return the string with trimming
+		return s.toString().trim();
+	}
+
 	public static void main(String[] args) throws IOException {
-		// System.out.println(new ScoringService().getDocumentsFromDBPedia("Dresden"));
-		System.out.println(new ScoringService().getString());
+		System.out.println(new ScoringService().getDocumentsFromDBPedia("Dresden"));
+		System.out.println(new ScoringService().getString("dummy"));
+		System.out.println(new ScoringService().getDocumentsFromWikiPedia("barack michecl obama"));
 
 	}
 }
