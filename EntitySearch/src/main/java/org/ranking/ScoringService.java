@@ -91,7 +91,6 @@ public class ScoringService {
 		}
 
 		ObjectMapper mapper = new ObjectMapper();
-
 		String writer = null;
 		try {
 			writer = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(responses);
@@ -131,8 +130,11 @@ public class ScoringService {
 
 			com.sun.jersey.api.client.Client sunClient = com.sun.jersey.api.client.Client.create();
 
-			com.sun.jersey.api.client.WebResource webResource = sunClient.resource(
-					"http://localhost:8080/AGDISTIS?entity=" + URLEncoder.encode(designedQueryTerms.toString() + ""));
+			String localServer = "https://kg-entity-search.cs.upb.de/";
+			String serverNameEnvProp = System.getenv("AGDISTIS_SERVER_NAME");
+			String serverName = serverNameEnvProp != null ? serverNameEnvProp : localServer;
+			com.sun.jersey.api.client.WebResource webResource = sunClient
+					.resource(serverName + "AGDISTIS?entity=" + URLEncoder.encode(designedQueryTerms.toString() + ""));
 
 			String response = webResource.get(String.class);
 
